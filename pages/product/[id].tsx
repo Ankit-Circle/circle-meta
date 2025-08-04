@@ -13,8 +13,8 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     <head>
       <title>${product.name}</title>
       <meta property="og:title" content="${product.name}" />
-      <meta property="og:description" content="${product.description}" />
-      <meta property="og:image" content="${product.image_url}" />
+      <meta name="description" property="og:description" content="${product.description}" />
+      <meta name="image" property="og:image" content="${product.image_url}" />
       <meta property="og:url" content="${process.env.NEXT_PUBLIC_APP_URL}/product/${product.product_url_key}" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="${product.name}" />
@@ -28,6 +28,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params }) => {
     </body>
     </html>
   `;
+
 
   return {
     props: {
