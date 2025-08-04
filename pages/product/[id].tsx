@@ -1,11 +1,22 @@
 import { GetServerSideProps } from "next";
 import { fetchProduct } from "../../lib/fetchProduct";
 
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params, req }) => {
   const id = params?.id as string;
-  const product = await fetchProduct(id);
+  const ua = req.headers["user-agent"] || "";
+  const isBot = /bot|facebook|whatsapp|twitter|linkedin|discord|slack/i.test(ua);
 
+  const product = await fetchProduct(id);
   if (!product) return { notFound: true };
+
+  if (!isBot) {
+    return {
+      redirect: {
+        destination: `${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}`,
+        permanent: false,
+      },
+    };
+  }
 
   const html = `
     <!DOCTYPE html>
