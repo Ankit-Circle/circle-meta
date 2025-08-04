@@ -17,11 +17,21 @@ export async function fetchProduct(urlKey: string) {
     return null;
   }
 
-  console.log("Fetched product:", data);
+  data.image_url = data.media?.[0].url || data.image_url || "https://placehold.co/600x400?text=Product";
 
-  if (!data.image_url) {
-    data.image_url = data.media?.[0].url || data.image_url || "https://placehold.co/600x400?text=Product";
+  try {
+    // if cloudinary, transform to optimize size
+    if (data.image_url.includes("res.cloudinary.com")) {
+      const parts = data.image_url.split("/upload/");
+      if (parts.length === 2) {
+        data.image_url = `${parts[0]}/upload/w_600,c_fill,q_auto,f_auto/${parts[1]}`;
+      }
+    }
+  } catch (error) {
+    console.error("Error processing image URL:", error);
   }
+
+  console.log("Fetched product:", data);
 
   return data;
 }
