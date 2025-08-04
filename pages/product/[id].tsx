@@ -1,21 +1,24 @@
 import { GetServerSideProps } from "next";
 import { fetchProduct } from "../../lib/fetchProduct";
 
-export const getServerSideProps: GetServerSideProps = async ({ params, req }) => {
+export const getServerSideProps: GetServerSideProps = async ({ params, req, res }) => {
   const id = params?.id as string;
   const ua = req.headers["user-agent"] || "";
   const isBot = /bot|facebook|whatsapp|twitter|linkedin|discord|slack/i.test(ua);
 
   const product = await fetchProduct(id);
-  if (!product) return { notFound: true };
+  if (!product) {
+    res.statusCode = 404;
+    res.end("Not Found");
+    return { props: {} };
+  }
 
   if (!isBot) {
-    return {
-      redirect: {
-        destination: `${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}`,
-        permanent: false,
-      },
-    };
+    res.writeHead(307, {
+      Location: `${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}`,
+    });
+    res.end();
+    return { props: {} };
   }
 
   const html = `
@@ -34,21 +37,15 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
       <meta name="twitter:description" content="${product.description}" />
       <meta name="twitter:image" content="${product.image_url}" />
     </head>
-    <body>
-    </body>
+    <body></body>
     </html>
   `;
 
-
-  return {
-    props: {
-      html,
-    },
-  };
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.end(html);
+  return { props: {} }; // Required by Next.js
 };
 
-export default function ProductPage({ html }: { html: string }) {
-  return (
-    <div dangerouslySetInnerHTML={{ __html: html }} />
-  );
+export default function ProductPage() {
+  return null; // This component never renders
 }
