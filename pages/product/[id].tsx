@@ -33,9 +33,6 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req }) =>
       <meta name="twitter:image" content="${product.image_url}" />
     </head>
     <body>
-      <script>
-        window.location.href = "${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}";
-      </script>
     </body>
     </html>
   `;
