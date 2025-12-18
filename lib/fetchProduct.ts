@@ -8,7 +8,7 @@ const supabase = createClient(
 export async function fetchProduct(urlKey: string) {
   const { data, error } = await supabase
     .from("products_unified") // ⬅️ your table name here
-    .select("id, name, description, image_url, product_url_key, media") // ⬅️ adjust columns as needed
+    .select("id, name, description, product_url_key, media") // ⬅️ adjust columns as needed
     .eq("product_url_key", urlKey)
     .single();
 
@@ -17,7 +17,25 @@ export async function fetchProduct(urlKey: string) {
     return null;
   }
 
-  data.image_url = data.media?.[0].url || data.image_url || "https://placehold.co/600x400?text=Product";
+  // Find the primary image from media array
+  let imageUrl = "https://placehold.co/600x400?text=Product"; // fallback
+  if (data.media && Array.isArray(data.media)) {
+    const primaryImage = data.media.find(
+      (item: any) => item.type === "image" && item.isPrimary === true
+    );
+    if (primaryImage) {
+      imageUrl = primaryImage.url;
+    } else {
+      // Fallback to first image if no primary found
+      const firstImage = data.media.find((item: any) => item.type === "image");
+      if (firstImage) {
+        imageUrl = firstImage.url;
+      }
+    }
+  }
+
+  // Set image_url for backward compatibility
+  data.image_url = imageUrl;
 
   try {
     // if cloudinary, transform to optimize size
