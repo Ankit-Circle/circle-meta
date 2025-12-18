@@ -34,22 +34,25 @@ export async function fetchProduct(urlKey: string) {
     }
   }
 
-  // Set image_url for backward compatibility
-  data.image_url = imageUrl;
-
+  // Apply Cloudinary optimization if needed
   try {
-    // if cloudinary, transform to optimize size
-    if (data.image_url.includes("res.cloudinary.com")) {
-      const parts = data.image_url.split("/upload/");
+    if (imageUrl.includes("res.cloudinary.com")) {
+      const parts = imageUrl.split("/upload/");
       if (parts.length === 2) {
-        data.image_url = `${parts[0]}/upload/w_600,c_fill,q_auto,f_auto/${parts[1]}`;
+        imageUrl = `${parts[0]}/upload/w_600,c_fill,q_auto,f_auto/${parts[1]}`;
       }
     }
   } catch (error) {
     console.error("Error processing image URL:", error);
   }
 
-  console.log("Fetched product:", data);
+  // Return data with image_url for backward compatibility
+  const productData = {
+    ...data,
+    image_url: imageUrl,
+  };
 
-  return data;
+  console.log("Fetched product:", productData);
+
+  return productData;
 }
