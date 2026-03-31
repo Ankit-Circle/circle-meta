@@ -30,7 +30,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req, res 
       <title>${product.name}</title>
       <meta property="og:title" content="${product.name}" />
       <meta property="og:description" content="${product.description}" />
-      <meta property="og:image" content="${product.image_url}" />
+      <meta property="og:image" content="${product.og_image}" />
       <meta property="og:url" content="${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="${product.name}" />
