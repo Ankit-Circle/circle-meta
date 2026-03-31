@@ -5,10 +5,23 @@ const supabase = createClient(
   process.env.SUPABASE_ANON_KEY!
 );
 
+function pickFallbackImageFromMedia(media: unknown): string | null {
+  if (!media || !Array.isArray(media)) return null;
+  const primaryImage = media.find(
+    (item: { type?: string; url?: string; isPrimary?: boolean }) =>
+      item.type === "image" && item.isPrimary === true && item.url
+  );
+  if (primaryImage?.url) return String(primaryImage.url);
+  const firstImage = media.find(
+    (item: { type?: string; url?: string }) => item.type === "image" && item.url
+  );
+  return firstImage?.url ? String(firstImage.url) : null;
+}
+
 export async function fetchProduct(urlKey: string) {
   const { data, error } = await supabase
-    .from("products_unified") // ⬅️ your table name here
-    .select("id, name, description, product_url_key, media") // ⬅️ adjust columns as needed
+    .from("products_unified")
+    .select("id, name, description, product_url_key, media, og_image")
     .eq("product_url_key", urlKey)
     .single();
 
@@ -17,36 +30,34 @@ export async function fetchProduct(urlKey: string) {
     return null;
   }
 
-  // Find the primary image from media array
-  let imageUrl = "https://placehold.co/600x400?text=Product"; // fallback
-  if (data.media && Array.isArray(data.media)) {
-    const primaryImage = data.media.find(
-      (item: any) => item.type === "image" && item.isPrimary === true
-    );
-    if (primaryImage) {
-      imageUrl = primaryImage.url;
-    } else {
-      // Fallback to first image if no primary found
-      const firstImage = data.media.find((item: any) => item.type === "image");
-      if (firstImage) {
-        imageUrl = firstImage.url;
-      }
-    }
+  const ogTrimmed =
+    typeof data.og_image === "string" ? data.og_image.trim() : "";
+  const fallback = pickFallbackImageFromMedia(data.media);
+
+  let imageUrl = "https://placehold.co/600x400?text=Product";
+  if (ogTrimmed) {
+    imageUrl = ogTrimmed;
+  } else if (fallback) {
+    imageUrl = fallback;
   }
 
-  // Apply Cloudinary optimization if needed
+  // OG URLs are already 1200×630 when from og_image; only downscale list-style fallbacks on Cloudinary.
+  const shouldOptimizeListSize = !ogTrimmed && Boolean(fallback);
   try {
-    if (imageUrl.includes("res.cloudinary.com")) {
+    if (
+      shouldOptimizeListSize &&
+      imageUrl.includes("res.cloudinary.com") &&
+      imageUrl.includes("/upload/")
+    ) {
       const parts = imageUrl.split("/upload/");
       if (parts.length === 2) {
         imageUrl = `${parts[0]}/upload/w_600,c_fill,q_auto,f_auto/${parts[1]}`;
       }
     }
-  } catch (error) {
-    console.error("Error processing image URL:", error);
+  } catch (err) {
+    console.error("Error processing image URL:", err);
   }
 
-  // Return data with image_url for backward compatibility
   const productData = {
     ...data,
     image_url: imageUrl,
