@@ -8,7 +8,7 @@ const supabase = createClient(
 export async function fetchProduct(urlKey: string) {
   const { data, error } = await supabase
     .from("products_unified") // ⬅️ your table name here
-    .select("id, name, description, product_url_key, media") // ⬅️ adjust columns as needed
+    .select("id, name, description, product_url_key, media, og_image") // ⬅️ adjust columns as needed
     .eq("product_url_key", urlKey)
     .single();
 
@@ -17,18 +17,25 @@ export async function fetchProduct(urlKey: string) {
     return null;
   }
 
-  // Find the primary image from media array
-  let imageUrl = "https://placehold.co/600x400?text=Product"; // fallback
-  if (data.media && Array.isArray(data.media)) {
+  const ogFromRow = data.og_image;
+  const hasOgImage =
+    typeof ogFromRow === "string" && ogFromRow.trim().length > 0;
+
+  // Sharing: og_image when set, else primary / first image from media
+  let imageUrl = "https://placehold.co/600x400?text=Product";
+  if (hasOgImage) {
+    imageUrl = ogFromRow.trim();
+  } else if (data.media && Array.isArray(data.media)) {
     const primaryImage = data.media.find(
       (item: any) => item.type === "image" && item.isPrimary === true
     );
-    if (primaryImage) {
+    if (primaryImage?.url) {
       imageUrl = primaryImage.url;
     } else {
-      // Fallback to first image if no primary found
-      const firstImage = data.media.find((item: any) => item.type === "image");
-      if (firstImage) {
+      const firstImage = data.media.find(
+        (item: any) => item.type === "image" && item.url
+      );
+      if (firstImage?.url) {
         imageUrl = firstImage.url;
       }
     }
