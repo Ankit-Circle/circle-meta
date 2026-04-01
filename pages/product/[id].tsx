@@ -21,6 +21,14 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req, res 
     return { props: {} };
   }
 
+  const ogW = (product as { og_image_width?: number }).og_image_width;
+  const ogH = (product as { og_image_height?: number }).og_image_height;
+  const ogDims =
+    typeof ogW === "number" && typeof ogH === "number"
+      ? `<meta property="og:image:width" content="${ogW}" />
+      <meta property="og:image:height" content="${ogH}" />`
+      : "";
+
   const html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -31,6 +39,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req, res 
       <meta property="og:title" content="${product.name}" />
       <meta property="og:description" content="${product.description}" />
       <meta property="og:image" content="${product.image_url}" />
+      ${ogDims}
       <meta property="og:url" content="${process.env.CIRCLE_APP_URL}/product/${product.product_url_key}" />
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content="${product.name}" />
