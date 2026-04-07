@@ -26,7 +26,7 @@ export const getServerSideProps: GetServerSideProps = async ({ params, req, res 
     <html lang="en">
     <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;" /> 
       <title>${product.name}</title>
       <meta property="og:title" content="${product.name}" />
       <meta property="og:description" content="${product.description}" />
