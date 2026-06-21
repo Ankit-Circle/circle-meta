@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { SHARE_CARD_HEIGHT, SHARE_CARD_WIDTH } from "./shareCard";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -21,10 +22,15 @@ export async function fetchProduct(urlKey: string) {
   const hasOgImage =
     typeof ogFromRow === "string" && ogFromRow.trim().length > 0;
 
-  // Sharing: og_image when set, else primary / first image from media
+  // Sharing: Bunny share card in og_image (1218×2166), else primary / first media image
   let imageUrl = "https://placehold.co/600x400?text=Product";
+  let imageWidth: number | undefined;
+  let imageHeight: number | undefined;
+
   if (hasOgImage) {
     imageUrl = ogFromRow.trim();
+    imageWidth = SHARE_CARD_WIDTH;
+    imageHeight = SHARE_CARD_HEIGHT;
   } else if (data.media && Array.isArray(data.media)) {
     const primaryImage = data.media.find(
       (item: any) => item.type === "image" && item.isPrimary === true
@@ -41,9 +47,9 @@ export async function fetchProduct(urlKey: string) {
     }
   }
 
-  // Apply Cloudinary optimization if needed
+  // Cloudinary fallback only — Bunny share cards are already sized for OG
   try {
-    if (imageUrl.includes("res.cloudinary.com")) {
+    if (!hasOgImage && imageUrl.includes("res.cloudinary.com")) {
       const parts = imageUrl.split("/upload/");
       if (parts.length === 2) {
         imageUrl = `${parts[0]}/upload/w_600,c_fill,q_auto,f_auto/${parts[1]}`;
@@ -57,6 +63,8 @@ export async function fetchProduct(urlKey: string) {
   const productData = {
     ...data,
     image_url: imageUrl,
+    image_width: imageWidth,
+    image_height: imageHeight,
   };
 
   console.log("Fetched product:", productData);
